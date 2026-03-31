@@ -122,12 +122,17 @@ src/
 
 | Command | Description |
 |---------|-------------|
-| `/poker new [buy-in]` | 🆕 Create a new table (default: 500 chips) |
+| `/poker new [buy-in]` | 🆕 Create a new table (default: 500, range: 100-5000) |
 | `/poker join` | 🙋 Join the open table in this channel |
 | `/poker start` | ▶️ Start the game (creator only, 2+ players) |
+| `/poker leave` | 🚪 Leave the game (fold + cash out) |
+| `/poker cancel` | ❌ Cancel a waiting game (creator only) |
+| `/poker end` | 🛑 End an active game, settle all chips (creator only) |
+| `/poker status` | 👀 Show current game state |
+| `/poker cards` | 🃏 Re-send your hole cards via DM |
 | `/poker balance` | 💰 Check your chip balance and stats |
 | `/poker refill` | 🔄 Claim daily refill (balance must be < 100) |
-| `/poker transfer @user <amount>` | 🎁 Send chips to a teammate |
+| `/poker transfer @user <amount>` | 🎁 Send chips to a teammate (max 1000/day) |
 | `/poker leaderboard [weekly\|alltime\|winrate]` | 🏆 View rankings |
 | `/poker stats [@user]` | 📊 View detailed player stats |
 | `/poker help` | ❓ Show rules and command reference |
@@ -204,7 +209,7 @@ Here's what happens under the hood when a hand is played:
 5. ⚙️ Worker processes: validate turn → update game state
 6. 🎨 Block Kit renderer builds new message
 7. 🔄 chat.update refreshes the shared game message
-8. 💰 If hand over → ledger writes, stats update
+8. 💰 If hand over → payout recorded. If game over → ledger settlement
 ```
 
 ---
@@ -216,12 +221,13 @@ Here's what happens under the hood when a hand is played:
 | 🏎️ **Runtime** | Bun |
 | 🌐 **HTTP** | Hono |
 | 🗄️ **Database** | PostgreSQL 16 + Drizzle ORM |
-| ⚡ **Cache / Queues** | Redis + BullMQ |
-| 💬 **Slack** | `@slack/web-api` |
-| 🃏 **Hand Eval** | `pokersolver` |
+| ⚡ **Cache / Queues** | Redis + GroupMQ |
+| 💬 **Slack** | `@slack/web-api` + `@slack/socket-mode` |
+| 🃏 **Hand Eval** | Custom (internal, no external deps) |
+| 📋 **Logging** | pino (structured JSON) |
 | ✅ **Linting** | Biome |
 | 🧪 **Testing** | `bun test` (built-in) |
-| 🚀 **Deployment** | Fly.io or Railway |
+| 🚀 **Deployment** | Docker (any platform) |
 
 ---
 

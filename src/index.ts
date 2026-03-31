@@ -1,9 +1,18 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import { getConfig } from "./config";
+import { createDb } from "./db/connection";
+import { createSlackRouter } from "./slack/routes";
 
-const app = new Hono()
+const config = getConfig();
+const db = createDb(config.DATABASE_URL);
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+const app = new Hono();
 
-export default app
+app.get("/health", (c) => {
+	return c.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+const slack = createSlackRouter({ db });
+app.route("/slack", slack);
+
+export default app;

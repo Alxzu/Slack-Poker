@@ -1,7 +1,20 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
-  }
+	"compilerOptions": {
+		"strict": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx",
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"paths": {
+			"@/engine/*": ["./src/engine/*"],
+			"@/slack/*": ["./src/slack/*"],
+			"@/db/*": ["./src/db/*"],
+			"@/workers/*": ["./src/workers/*"],
+			"@/utils/*": ["./src/utils/*"]
+		},
+		"baseUrl": ".",
+		"types": ["bun"]
+	},
+	"include": ["src/**/*.ts", "tests/**/*.ts"]
 }

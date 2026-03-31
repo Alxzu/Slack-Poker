@@ -1,20 +1,24 @@
+import type { Queue } from "groupmq";
 import { Hono } from "hono";
 import type { Database } from "../db/connection";
+import type { PokerAction } from "../engine/types";
+import { chips } from "../engine/types";
 import { logger } from "../utils/logger";
+import { enqueueAction } from "../workers/action-queue";
+import type { GameManager } from "../workers/game-manager";
 import { parseActionPayload, routeAction } from "./actions";
+import type { SlackClient } from "./client";
 import { handleBalance } from "./commands/balance";
-import {
-	handleCancel,
-	handleCards,
-	handleEnd,
-	handleJoin,
-	handleLeave,
-	handleNew,
-	handleStart,
-} from "./commands/game-stubs";
+import { handleCancel } from "./commands/cancel";
+import { handleCards } from "./commands/cards";
+import { handleEnd } from "./commands/end";
 import { handleHelp, handleUnknownCommand } from "./commands/help";
+import { handleJoin } from "./commands/join";
 import { handleLeaderboard } from "./commands/leaderboard";
+import { handleLeave } from "./commands/leave";
+import { handleNew } from "./commands/new";
 import { handleRefill } from "./commands/refill";
+import { handleStart } from "./commands/start";
 import { handleStats } from "./commands/stats";
 import { handleStatus } from "./commands/status";
 import { handleTransfer } from "./commands/transfer";
@@ -23,6 +27,33 @@ const log = logger.child({ module: "slack-routes" });
 
 export interface SlackDeps {
 	db: Database;
+	gameManager?: GameManager;
+	slackClient?: SlackClient;
+	actionQueue?: Queue;
+}
+
+function comingSoon(command: string): object[] {
+	return [
+		{
+			type: "section",
+			text: {
+				type: "mrkdwn",
+				text: `:construction: \`/poker ${command}\` — Coming soon.`,
+			},
+		},
+	];
+}
+
+function _needsWorkers(): object[] {
+	return [
+		{
+			type: "section",
+			text: {
+				type: "mrkdwn",
+				text: ":x: Game features are not available (workers not configured).",
+			},
+		},
+	];
 }
 
 export function createSlackRouter(deps: SlackDeps) {
@@ -53,29 +84,108 @@ export function createSlackRouter(deps: SlackDeps) {
 				break;
 
 			case "new": {
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("new");
+					break;
+				}
 				const buyIn = args ? Number.parseInt(args, 10) : undefined;
-				blocks = handleNew(buyIn);
+				blocks = await handleNew(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+					buyIn,
+				);
 				break;
 			}
 
 			case "join":
-				blocks = handleJoin();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("join");
+					break;
+				}
+				blocks = await handleJoin(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "start":
-				blocks = handleStart();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("start");
+					break;
+				}
+				blocks = await handleStart(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "leave":
-				blocks = handleLeave();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("leave");
+					break;
+				}
+				blocks = await handleLeave(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "cancel":
-				blocks = handleCancel();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("cancel");
+					break;
+				}
+				blocks = await handleCancel(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "end":
-				blocks = handleEnd();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("end");
+					break;
+				}
+				blocks = await handleEnd(
+					{
+						db: deps.db,
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "status":
@@ -83,7 +193,19 @@ export function createSlackRouter(deps: SlackDeps) {
 				break;
 
 			case "cards":
-				blocks = handleCards();
+				if (!deps.gameManager || !deps.slackClient) {
+					blocks = comingSoon("cards");
+					break;
+				}
+				blocks = await handleCards(
+					{
+						gameManager: deps.gameManager,
+						slackClient: deps.slackClient,
+					},
+					teamId,
+					channelId,
+					userId,
+				);
 				break;
 
 			case "balance":
@@ -126,20 +248,47 @@ export function createSlackRouter(deps: SlackDeps) {
 		}
 
 		const payload = parseActionPayload(rawPayload);
-		const handler = routeAction(payload.actionId);
+		const actionType = routeAction(payload.actionId);
 
 		log.info(
 			{
 				actionId: payload.actionId,
-				handler,
+				actionType,
 				userId: payload.userId,
 				channelId: payload.channelId,
 			},
 			"Action received",
 		);
 
-		// All game actions will be routed to the game loop via Redis once implemented.
-		// For now, acknowledge immediately.
+		// Handle game actions via queue if available
+		if (deps.actionQueue && deps.gameManager) {
+			const teamId = ""; // Actions don't carry team_id directly; look up from game
+			const gameId = await deps.gameManager.getChannelGame(
+				teamId,
+				payload.channelId,
+			);
+
+			if (
+				gameId &&
+				["fold", "check", "call", "raise", "allIn"].includes(actionType)
+			) {
+				const action: PokerAction =
+					actionType === "raise"
+						? {
+								type: "raise",
+								playerId: payload.userId,
+								amount: chips(0), // Will be validated by engine
+							}
+						: ({
+								type: actionType as "fold" | "check" | "call" | "allIn",
+								playerId: payload.userId,
+							} as PokerAction);
+
+				await enqueueAction(deps.actionQueue, gameId, action);
+			}
+		}
+
+		// Acknowledge immediately per Slack's 3-second requirement
 		return c.json({});
 	});
 

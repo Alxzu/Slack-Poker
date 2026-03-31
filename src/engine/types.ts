@@ -16,7 +16,21 @@ export const handId = (s: string): HandId => s as HandId;
 
 // Card types
 
-export const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"] as const;
+export const RANKS = [
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"10",
+	"J",
+	"Q",
+	"K",
+	"A",
+] as const;
 export type Rank = (typeof RANKS)[number];
 
 export const SUITS = ["spades", "hearts", "diamonds", "clubs"] as const;
@@ -56,12 +70,23 @@ export type PokerAction =
 	| { readonly type: "fold"; readonly playerId: string }
 	| { readonly type: "check"; readonly playerId: string }
 	| { readonly type: "call"; readonly playerId: string }
-	| { readonly type: "raise"; readonly playerId: string; readonly amount: Chips }
+	| {
+			readonly type: "raise";
+			readonly playerId: string;
+			readonly amount: Chips;
+	  }
 	| { readonly type: "allIn"; readonly playerId: string };
 
 // Game phase
 
-export type GamePhase = "waiting" | "preflop" | "flop" | "turn" | "river" | "showdown" | "complete";
+export type GamePhase =
+	| "waiting"
+	| "preflop"
+	| "flop"
+	| "turn"
+	| "river"
+	| "showdown"
+	| "complete";
 
 // Player state at the table
 

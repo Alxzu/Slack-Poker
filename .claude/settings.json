@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "bun run dev",
+      "bun run test",
+      "bun run build",
+      "bun install",
+      "bun test",
+      "git status",
+      "git diff",
+      "git log",
+      "git add",
+      "git commit",
+      "git branch",
+      "git checkout",
+      "git switch",
+      "git stash",
+      "git pull",
+      "pnpm install"
+    ],
+    "deny": [
+      "rm -rf",
+      "cat .env",
+      "git push --force",
+      "git reset --hard"
+    ]
+  }
+}

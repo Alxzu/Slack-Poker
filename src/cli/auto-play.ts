@@ -163,16 +163,82 @@ const dianaStrategy: Strategy = (player, state, holeCards, legal) => {
 	return legal.find((a) => a.type === "fold")!;
 };
 
-// ── Game Runner ───────────────────────────────────────────────────
+/** Eve: Tight-passive. Only plays strong hands, rarely raises. */
+const eveStrategy: Strategy = (player, state, holeCards, legal) => {
+	const legalTypes = new Set(legal.map((a) => a.type));
+	const hand = handStrength(holeCards, state.communityCards);
+	const rankVal = (r: string) =>
+		"23456789".indexOf(r[0]) + 2 ||
+		({ T: 10, J: 11, Q: 12, K: 13, A: 14 } as Record<string, number>)[
+			r[0]
+		] ||
+		0;
+	const highCard = Math.max(
+		rankVal(holeCards[0].rank),
+		rankVal(holeCards[1].rank),
+	);
+	const paired = holeCards[0].rank === holeCards[1].rank;
+
+	if (hand) {
+		if (hand.rank >= 5) {
+			if (legalTypes.has("raise"))
+				return legal.find((a) => a.type === "raise")!;
+		}
+		if (hand.rank >= 2) {
+			if (legalTypes.has("call")) return legal.find((a) => a.type === "call")!;
+			if (legalTypes.has("check"))
+				return legal.find((a) => a.type === "check")!;
+		}
+		if (legalTypes.has("check")) return legal.find((a) => a.type === "check")!;
+		return legal.find((a) => a.type === "fold")!;
+	}
+
+	// Preflop: only play big pairs and high aces
+	if (paired && highCard >= 9) {
+		if (legalTypes.has("call")) return legal.find((a) => a.type === "call")!;
+	}
+	if (highCard >= 14) {
+		if (legalTypes.has("call")) return legal.find((a) => a.type === "call")!;
+	}
+	if (legalTypes.has("check")) return legal.find((a) => a.type === "check")!;
+	return legal.find((a) => a.type === "fold")!;
+};
+
+/** Frank: Maniac. Raises everything, all-in with any pair. */
+const frankStrategy: Strategy = (player, state, holeCards, legal) => {
+	const legalTypes = new Set(legal.map((a) => a.type));
+	const hand = handStrength(holeCards, state.communityCards);
+
+	if (hand) {
+		if (hand.rank >= 2 && legalTypes.has("allIn"))
+			return legal.find((a) => a.type === "allIn")!;
+		if (legalTypes.has("raise"))
+			return legal.find((a) => a.type === "raise")!;
+		if (legalTypes.has("call")) return legal.find((a) => a.type === "call")!;
+		if (legalTypes.has("check")) return legal.find((a) => a.type === "check")!;
+		return legal.find((a) => a.type === "fold")!;
+	}
+
+	// Preflop: raise or call everything
+	if (legalTypes.has("raise") && Math.random() < 0.6)
+		return legal.find((a) => a.type === "raise")!;
+	if (legalTypes.has("call")) return legal.find((a) => a.type === "call")!;
+	if (legalTypes.has("check")) return legal.find((a) => a.type === "check")!;
+	return legal.find((a) => a.type === "fold")!;
+};
+
+// ── Game Configuration ────────────────────────────────────────────
 
 const PLAYERS = [
 	{ id: "alice", name: "Alice", strategy: aliceStrategy },
 	{ id: "bob", name: "Bob", strategy: bobStrategy },
 	{ id: "charlie", name: "Charlie", strategy: charlieStrategy },
 	{ id: "diana", name: "Diana", strategy: dianaStrategy },
+	{ id: "eve", name: "Eve", strategy: eveStrategy },
+	{ id: "frank", name: "Frank", strategy: frankStrategy },
 ];
 
-const HANDS_TO_PLAY = 5;
+const HANDS_TO_PLAY = 10;
 const BUY_IN = 500;
 const SMALL_BLIND = 5;
 const BIG_BLIND = 10;
@@ -188,7 +254,7 @@ function logSeparator() {
 function main() {
 	log("");
 	logSeparator();
-	log("  AUTO-PLAY: 4 Players × 5 Hands");
+	log(`  AUTO-PLAY: ${PLAYERS.length} Players × ${HANDS_TO_PLAY} Hands`);
 	log(`  Players: ${PLAYERS.map((p) => p.name).join(", ")}`);
 	log(`  Buy-in: ${BUY_IN} | Blinds: ${SMALL_BLIND}/${BIG_BLIND}`);
 	logSeparator();

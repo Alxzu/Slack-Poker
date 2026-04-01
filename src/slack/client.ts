@@ -17,7 +17,7 @@ export class SlackClient {
 			blocks: blocks as never[],
 			text: "Poker update",
 		});
-		return res.ts!;
+		return res.ts ?? "";
 	}
 
 	async updateMessage(
@@ -52,7 +52,8 @@ export class SlackClient {
 		if (cached) return cached;
 
 		const res = await this.client.conversations.open({ users: userId });
-		const channelId = res.channel!.id!;
+		const channelId = res.channel?.id ?? "";
+		if (!channelId) throw new Error(`Failed to open DM with ${userId}`);
 		this.dmChannelCache.set(userId, channelId);
 		return channelId;
 	}

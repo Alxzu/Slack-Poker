@@ -1,5 +1,5 @@
 import type { Card, GameState } from "../../engine/types";
-import { cardsToString, cardToEmoji, faceDownCards } from "./cards";
+import { cardsToString, faceDownCards } from "./cards";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -58,27 +58,6 @@ function phaseName(phase: string): string {
 		default:
 			return phase;
 	}
-}
-
-function badgeFor(
-	seatIndex: number,
-	dealerSeat: number,
-	playerCount: number,
-	smallBlindOffset: number,
-): string {
-	if (seatIndex === dealerSeat) return " (D)";
-	// In heads-up, dealer is SB
-	if (playerCount === 2) {
-		if (seatIndex === dealerSeat) return " (D/SB)";
-		return " (BB)";
-	}
-	const seats = playerCount; // simplified — we rotate by active list
-	if (smallBlindOffset === 1 && seatIndex !== dealerSeat) {
-		// next after dealer
-		return " (SB)";
-	}
-	if (smallBlindOffset === 2) return " (BB)";
-	return "";
 }
 
 // ---------------------------------------------------------------------------

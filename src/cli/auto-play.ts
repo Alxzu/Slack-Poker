@@ -267,6 +267,7 @@ function main() {
 
 	const playerName = (id: string) => PLAYERS.find((p) => p.id === id)?.name ?? id;
 	const playerStrategy = (id: string) => PLAYERS.find((p) => p.id === id)?.strategy ?? aliceStrategy;
+	const eliminatedPlayers: { id: string; hand: number }[] = [];
 
 	for (let hand = 1; hand <= HANDS_TO_PLAY; hand++) {
 		const activePlayers = state.players.filter((p) => (p.stack as number) > 0);
@@ -370,28 +371,29 @@ function main() {
 			}
 		}
 
-		// End hand
-		state = endHand(state);
-
-		// Log chip changes
+		// Log chip changes (before endHand removes busted players)
 		log("\n  Chip changes:");
 		const totalChipsAfter = state.players.reduce((s, p) => s + (p.stack as number), 0);
 		for (const p of state.players) {
 			const pre = preStacks.get(p.userId) ?? 0;
 			const post = p.stack as number;
 			const diff = post - pre;
-			const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+			const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : "0";
 			log(`    ${playerName(p.userId).padEnd(10)} ${String(post).padStart(4)} chips (${diffStr})`);
 		}
 		log(`    ${"TOTAL".padEnd(10)} ${String(totalChipsAfter).padStart(4)} chips ${totalChipsAfter === totalChipsBefore ? "✓ CONSERVED" : `✗ MISMATCH (was ${totalChipsBefore})`}`);
 
-		// Check for eliminated players
+		// Check for eliminated players before endHand removes them
 		const eliminated = state.players.filter((p) => (p.stack as number) === 0);
 		if (eliminated.length > 0) {
 			for (const p of eliminated) {
-				log(`\n  ☠ ${playerName(p.userId)} eliminated!`);
+				log(`\n  ☠  ${playerName(p.userId)} eliminated!`);
+				eliminatedPlayers.push({ id: p.userId, hand });
 			}
 		}
+
+		// End hand (removes busted players)
+		state = endHand(state);
 	}
 
 	// Final summary
@@ -400,9 +402,18 @@ function main() {
 	log("  FINAL STANDINGS");
 	logSeparator();
 	const sorted = [...state.players].sort((a, b) => (b.stack as number) - (a.stack as number));
+	let rank = 0;
 	for (let i = 0; i < sorted.length; i++) {
-		const medal = i === 0 ? "🏆" : i === 1 ? "🥈" : i === 2 ? "🥉" : "  ";
+		rank++;
+		const medal = rank === 1 ? "🏆" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "  ";
 		log(`  ${medal} ${playerName(sorted[i].userId).padEnd(10)} ${sorted[i].stack as number} chips`);
+	}
+	// Show eliminated players in reverse order (last eliminated = highest rank)
+	for (let i = eliminatedPlayers.length - 1; i >= 0; i--) {
+		rank++;
+		const e = eliminatedPlayers[i];
+		const medal = rank <= 3 ? ["🏆", "🥈", "🥉"][rank - 1] : "  ";
+		log(`  ${medal} ${playerName(e.id).padEnd(10)} 0 chips (eliminated hand #${e.hand})`);
 	}
 	logSeparator();
 	log("");

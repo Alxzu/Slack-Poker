@@ -1,5 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { cardToEmoji, cardsToString, faceDownCards } from "../../src/slack/blocks/cards";
+import {
+	type Card,
+	chips,
+	type GameState,
+	handId,
+	seatIndex,
+} from "../../src/engine/types";
+import {
+	cardsToString,
+	cardToEmoji,
+	faceDownCards,
+} from "../../src/slack/blocks/cards";
 import {
 	buildGameOverMessage,
 	buildPlayingMessage,
@@ -11,13 +22,6 @@ import {
 	buildEmptyLeaderboard,
 	buildLeaderboardMessage,
 } from "../../src/slack/blocks/leaderboard";
-import {
-	type GameState,
-	type Card,
-	chips,
-	seatIndex,
-	handId,
-} from "../../src/engine/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,8 +66,14 @@ function makeGameState(overrides: Partial<GameState> = {}): GameState {
 			},
 		],
 		deck: [],
-		communityCards: [makeCard("A", "spades"), makeCard("K", "hearts"), makeCard("10", "diamonds")],
-		pots: [{ amount: chips(200), eligiblePlayers: [seatIndex(0), seatIndex(1)] }],
+		communityCards: [
+			makeCard("A", "spades"),
+			makeCard("K", "hearts"),
+			makeCard("10", "diamonds"),
+		],
+		pots: [
+			{ amount: chips(200), eligiblePlayers: [seatIndex(0), seatIndex(1)] },
+		],
 		dealerSeat: seatIndex(0),
 		activeSeat: seatIndex(1),
 		smallBlind: chips(5),
@@ -104,7 +114,10 @@ describe("cardToEmoji", () => {
 
 describe("cardsToString", () => {
 	test("joins multiple cards", () => {
-		const result = cardsToString([makeCard("A", "spades"), makeCard("K", "hearts")]);
+		const result = cardsToString([
+			makeCard("A", "spades"),
+			makeCard("K", "hearts"),
+		]);
 		expect(result).toContain(":spades: A");
 		expect(result).toContain(":hearts: K");
 	});
@@ -156,7 +169,9 @@ describe("buildWaitingMessage", () => {
 
 	test("includes instruction text", () => {
 		const blocks = buildWaitingMessage(game);
-		expect(findBlockText(blocks, "Creator can start when 2+ players have joined")).toBe(true);
+		expect(
+			findBlockText(blocks, "Creator can start when 2+ players have joined"),
+		).toBe(true);
 	});
 });
 
@@ -338,7 +353,10 @@ describe("buildHoleCardsMessage", () => {
 
 	test("includes turn info when provided", () => {
 		const cards = [makeCard("A", "spades"), makeCard("K", "hearts")];
-		const blocks = buildHoleCardsMessage(cards, undefined, { pot: 100, toCall: 20 });
+		const blocks = buildHoleCardsMessage(cards, undefined, {
+			pot: 100,
+			toCall: 20,
+		});
 		expect(findBlockText(blocks, "100")).toBe(true);
 		expect(findBlockText(blocks, "20")).toBe(true);
 	});
@@ -352,8 +370,20 @@ describe("buildLeaderboardMessage", () => {
 	test("formats rankings correctly", () => {
 		const entries = [
 			{ userId: "U001", rank: 1, value: 1500, gamesPlayed: 10 },
-			{ userId: "U002", rank: 2, value: 800, gamesPlayed: 8, movement: "up" as const },
-			{ userId: "U003", rank: 3, value: -200, gamesPlayed: 5, movement: "down" as const },
+			{
+				userId: "U002",
+				rank: 2,
+				value: 800,
+				gamesPlayed: 8,
+				movement: "up" as const,
+			},
+			{
+				userId: "U003",
+				rank: 3,
+				value: -200,
+				gamesPlayed: 5,
+				movement: "down" as const,
+			},
 		];
 		const blocks = buildLeaderboardMessage("alltime", entries);
 		expect(findBlockText(blocks, "first_place_medal")).toBe(true);

@@ -1,6 +1,6 @@
-import { eq, and, inArray } from "drizzle-orm";
-import { games, gamePlayers, gameHands, handPayouts } from "./schema";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Database } from "./connection";
+import { gameHands, gamePlayers, games, handPayouts } from "./schema";
 
 export async function createGame(
 	db: Database,

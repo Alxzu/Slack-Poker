@@ -1,6 +1,6 @@
-import { eq, and, sql, gte } from "drizzle-orm";
-import { ledgerAccounts, ledgerEvents } from "./schema";
+import { and, eq, gte, sql } from "drizzle-orm";
 import type { Database } from "./connection";
+import { ledgerAccounts, ledgerEvents } from "./schema";
 
 export class OptimisticLockError extends Error {
 	constructor() {
@@ -11,9 +11,7 @@ export class OptimisticLockError extends Error {
 
 export class InsufficientBalanceError extends Error {
 	constructor(balance: number, amount: number) {
-		super(
-			`Insufficient balance: have ${balance}, need ${amount}`,
-		);
+		super(`Insufficient balance: have ${balance}, need ${amount}`);
 		this.name = "InsufficientBalanceError";
 	}
 }

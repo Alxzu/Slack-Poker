@@ -1,16 +1,16 @@
+import { sql } from "drizzle-orm";
 import {
-	pgTable,
-	text,
-	integer,
-	uuid,
-	timestamp,
 	boolean,
-	jsonb,
-	primaryKey,
 	check,
 	date,
+	integer,
+	jsonb,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+	uuid,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
 export const ledgerAccounts = pgTable(
 	"ledger_accounts",

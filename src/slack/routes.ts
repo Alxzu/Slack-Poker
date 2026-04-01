@@ -22,6 +22,9 @@ import { handleStart } from "./commands/start";
 import { handleStats } from "./commands/stats";
 import { handleStatus } from "./commands/status";
 import { handleTransfer } from "./commands/transfer";
+import { errorBoundary } from "./error-boundary";
+import { rateLimiter } from "./rate-limit";
+import { sanitizeText } from "./sanitize";
 
 const log = logger.child({ module: "slack-routes" });
 
@@ -59,10 +62,16 @@ function _needsWorkers(): object[] {
 export function createSlackRouter(deps: SlackDeps) {
 	const slack = new Hono();
 
+	// Security: error boundary catches all unhandled errors
+	slack.onError(errorBoundary());
+	// Rate limit slash commands per user per workspace
+	slack.use("/commands", rateLimiter({ windowMs: 60000, maxRequests: 20 }));
+
 	slack.post("/commands", async (c) => {
 		const body = await c.req.parseBody();
 
-		const text = (body.text as string | undefined)?.trim() ?? "";
+		const rawText = (body.text as string | undefined)?.trim() ?? "";
+		const text = sanitizeText(rawText);
 		const userId = body.user_id as string;
 		const channelId = body.channel_id as string;
 		const teamId = body.team_id as string;

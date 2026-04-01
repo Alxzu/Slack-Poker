@@ -1,6 +1,6 @@
-import { eq, and, desc, sql } from "drizzle-orm";
-import { playerStats } from "./schema";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { Database } from "./connection";
+import { playerStats } from "./schema";
 
 export interface PlayerResult {
 	userId: string;
@@ -70,9 +70,7 @@ export async function getLeaderboard(
 				.select()
 				.from(playerStats)
 				.where(eq(playerStats.workspaceId, workspaceId))
-				.orderBy(
-					desc(sql`${playerStats.chipsWon} - ${playerStats.chipsLost}`),
-				)
+				.orderBy(desc(sql`${playerStats.chipsWon} - ${playerStats.chipsLost}`))
 				.limit(10);
 
 		case "winrate": {

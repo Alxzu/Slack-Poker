@@ -39,7 +39,9 @@ export function buildLeaderboardMessage(
 	for (const entry of entries) {
 		const mov = entry.movement ? `  ${MOVEMENT_EMOJI[entry.movement]}` : "";
 		const valueText =
-			type === "winrate" ? `${entry.value}%` : `${entry.value >= 0 ? "+" : ""}${entry.value} chips`;
+			type === "winrate"
+				? `${entry.value}%`
+				: `${entry.value >= 0 ? "+" : ""}${entry.value} chips`;
 		blocks.push({
 			type: "section",
 			text: {

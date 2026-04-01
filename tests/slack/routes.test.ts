@@ -143,10 +143,12 @@ describe("slash command routing", () => {
 	});
 
 	test("/poker balance routes to balance (stub db throws)", async () => {
-		// With a mock db this will throw, but we verify routing works
+		// With a mock db this will throw, but error boundary catches it
 		const res = await app.request(slashCommand("balance"));
-		// db call will fail with mock, expect 500
-		expect(res.status).toBe(500);
+		expect(res.status).toBe(200);
+		const json = await res.json();
+		const text = JSON.stringify(json.blocks);
+		expect(text).toContain("Something went wrong");
 	});
 
 	test("/poker transfer @user 100 routes to transfer", async () => {
@@ -160,16 +162,21 @@ describe("slash command routing", () => {
 
 	test("/poker transfer <@U999> 100 parses user and amount", async () => {
 		// Will fail at db level but we test that the parser works by checking
-		// it doesn't return the "Usage" error
+		// it doesn't return the "Usage" error (error boundary catches db error)
 		const res = await app.request(slashCommand("transfer <@U999> 100"));
-		// Mock db throws → 500, which means it got past the parser
-		expect(res.status).toBe(500);
+		expect(res.status).toBe(200);
+		const json = await res.json();
+		const text = JSON.stringify(json.blocks);
+		expect(text).not.toContain("Usage");
 	});
 
 	test("/poker leaderboard winrate parses type correctly", async () => {
-		// Will fail at db level but verifies routing
+		// Will fail at db level but error boundary catches it
 		const res = await app.request(slashCommand("leaderboard winrate"));
-		expect(res.status).toBe(500); // mock db
+		expect(res.status).toBe(200);
+		const json = await res.json();
+		const text = JSON.stringify(json.blocks);
+		expect(text).toContain("Something went wrong");
 	});
 
 	test("subcommand is case-insensitive", async () => {

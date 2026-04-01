@@ -1,5 +1,5 @@
 import type { Card, GameState } from "../../engine/types";
-import { cardToEmoji, cardsToString, faceDownCards } from "./cards";
+import { cardsToString, cardToEmoji, faceDownCards } from "./cards";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,7 +22,11 @@ function actions(elements: object[]): object {
 	return { type: "actions", elements };
 }
 
-function button(text: string, actionId: string, style?: "primary" | "danger"): object {
+function button(
+	text: string,
+	actionId: string,
+	style?: "primary" | "danger",
+): object {
 	const btn: Record<string, unknown> = {
 		type: "button",
 		text: { type: "plain_text", text, emoji: true },
@@ -95,7 +99,9 @@ export function buildWaitingMessage(game: {
 	return [
 		header(`:spades: Poker Game — Buy-in: ${game.buyIn} chips`),
 		section(`*Players (${game.players.length}):* ${playerList}`),
-		section("Click *Join* below. Creator can start when 2+ players have joined."),
+		section(
+			"Click *Join* below. Creator can start when 2+ players have joined.",
+		),
 		actions([
 			button("Join Game", "poker_join", "primary"),
 			button("Start Game", "poker_start"),
@@ -107,13 +113,18 @@ export function buildWaitingMessage(game: {
 // Playing
 // ---------------------------------------------------------------------------
 
-export function buildPlayingMessage(state: GameState, lastHandResult?: string): object[] {
+export function buildPlayingMessage(
+	state: GameState,
+	lastHandResult?: string,
+): object[] {
 	const totalPot = state.pots.reduce((sum, p) => sum + p.amount, 0);
 	const blocks: object[] = [];
 
 	// Header
 	blocks.push(
-		header(`Hand #${state.handNumber} | ${phaseName(state.phase)} | Pot: ${totalPot}`),
+		header(
+			`Hand #${state.handNumber} | ${phaseName(state.phase)} | Pot: ${totalPot}`,
+		),
 	);
 
 	// Last hand result
@@ -129,7 +140,8 @@ export function buildPlayingMessage(state: GameState, lastHandResult?: string): 
 	} else {
 		const shown = cardsToString(state.communityCards);
 		const remaining = 5 - communityCount;
-		communityText = remaining > 0 ? `${shown}  ${faceDownCards(remaining)}` : shown;
+		communityText =
+			remaining > 0 ? `${shown}  ${faceDownCards(remaining)}` : shown;
 	}
 	blocks.push(section(`*Board:*  ${communityText}`));
 
@@ -146,7 +158,8 @@ export function buildPlayingMessage(state: GameState, lastHandResult?: string): 
 	// Player rows
 	const activePlayers = state.players.filter((p) => !p.sittingOut);
 	for (const player of activePlayers) {
-		const isActive = player.seat === state.activeSeat && !player.folded && !player.allIn;
+		const isActive =
+			player.seat === state.activeSeat && !player.folded && !player.allIn;
 		const turnIndicator = isActive ? ":point_right: " : "";
 
 		let status = "";
@@ -161,8 +174,12 @@ export function buildPlayingMessage(state: GameState, lastHandResult?: string): 
 		const seatOrder = activePlayers.map((p) => p.seat);
 		const dealerIdx = seatOrder.indexOf(state.dealerSeat);
 		if (dealerIdx >= 0) {
-			const sbIdx = (dealerIdx + (activePlayers.length === 2 ? 0 : 1)) % activePlayers.length;
-			const bbIdx = (dealerIdx + (activePlayers.length === 2 ? 1 : 2)) % activePlayers.length;
+			const sbIdx =
+				(dealerIdx + (activePlayers.length === 2 ? 0 : 1)) %
+				activePlayers.length;
+			const bbIdx =
+				(dealerIdx + (activePlayers.length === 2 ? 1 : 2)) %
+				activePlayers.length;
 			const playerIdx = seatOrder.indexOf(player.seat);
 			if (playerIdx === sbIdx && activePlayers.length > 2) badge += " SB";
 			if (playerIdx === bbIdx) badge += " BB";
@@ -229,7 +246,8 @@ export function buildShowdownMessage(
 
 	for (const result of results) {
 		const cardsText = cardsToString(result.cards);
-		const payoutText = result.payout > 0 ? `  :moneybag: +${result.payout}` : "";
+		const payoutText =
+			result.payout > 0 ? `  :moneybag: +${result.payout}` : "";
 		blocks.push(
 			section(
 				`<@${result.userId}>  ${cardsText}  —  *${result.handName}*${payoutText}`,
@@ -257,9 +275,16 @@ export function buildGameOverMessage(game: {
 	const sorted = [...game.players].sort((a, b) => b.chipsDelta - a.chipsDelta);
 	for (const player of sorted) {
 		const sign = player.chipsDelta >= 0 ? "+" : "";
-		const emoji = player.chipsDelta > 0 ? ":chart_with_upwards_trend:" : player.chipsDelta < 0 ? ":chart_with_downwards_trend:" : ":heavy_minus_sign:";
+		const emoji =
+			player.chipsDelta > 0
+				? ":chart_with_upwards_trend:"
+				: player.chipsDelta < 0
+					? ":chart_with_downwards_trend:"
+					: ":heavy_minus_sign:";
 		blocks.push(
-			section(`${emoji} <@${player.userId}>  ${sign}${player.chipsDelta} chips`),
+			section(
+				`${emoji} <@${player.userId}>  ${sign}${player.chipsDelta} chips`,
+			),
 		);
 	}
 

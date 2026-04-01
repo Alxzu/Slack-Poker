@@ -26,7 +26,10 @@ export function slackVerification(signingSecret: string): MiddlewareHandler {
 		const sigBuffer = Buffer.from(mySignature, "utf-8");
 		const slackSigBuffer = Buffer.from(slackSignature, "utf-8");
 
-		if (sigBuffer.length !== slackSigBuffer.length || !timingSafeEqual(sigBuffer, slackSigBuffer)) {
+		if (
+			sigBuffer.length !== slackSigBuffer.length ||
+			!timingSafeEqual(sigBuffer, slackSigBuffer)
+		) {
 			return c.text("Invalid signature", 401);
 		}
 

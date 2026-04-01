@@ -20,7 +20,11 @@ export class SlackClient {
 		return res.ts!;
 	}
 
-	async updateMessage(channel: string, ts: string, blocks: object[]): Promise<void> {
+	async updateMessage(
+		channel: string,
+		ts: string,
+		blocks: object[],
+	): Promise<void> {
 		const maxAttempts = 3;
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			try {

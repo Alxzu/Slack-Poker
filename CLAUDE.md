@@ -70,6 +70,13 @@ The codebase is split into four layers with strict dependency boundaries:
 - **Check:** `bunx biome check .`
 - **Fix:** `bunx biome check --write .`
 
+## Deployment
+
+- **Local Raspberry Pi:** Run `/deploy-pi` to sync source, rebuild, and verify health on the Pi
+- Deploy config (SSH credentials) lives in `.env.deploy` (gitignored) — never commit secrets
+- Pi runs the full stack via `docker-compose.prod.yml` on port 4444 (Socket Mode, no public URL needed)
+- Database migrations are manual — pipe SQL to the postgres container (see deploy skill for details)
+
 ## Plan Tracking
 
 - Implementation plan lives in `.claude/plans/implementation.md`

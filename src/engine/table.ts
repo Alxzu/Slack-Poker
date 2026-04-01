@@ -319,9 +319,15 @@ export function applyAction(state: GameState, action: PokerAction): GameState {
 	if (remaining.length === 1) {
 		// Immediate win
 		const winner = remaining[0];
-		const pots = calculatePots(newPlayers);
+
+		// Collect any outstanding bets into pots
+		const currentBetPots = calculatePots(newPlayers);
+
+		// Merge with pots already collected from previous streets
+		const allPots = [...state.pots, ...currentBetPots];
+
 		let totalPot = 0;
-		for (const pot of pots) {
+		for (const pot of allPots) {
 			totalPot += pot.amount as number;
 		}
 
@@ -336,7 +342,7 @@ export function applyAction(state: GameState, action: PokerAction): GameState {
 			...state,
 			phase: "showdown",
 			players: finalPlayers,
-			pots,
+			pots: allPots,
 			betting: newRound,
 		};
 	}

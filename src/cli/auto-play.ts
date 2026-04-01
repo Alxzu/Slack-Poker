@@ -36,7 +36,7 @@ type Strategy = (
 const SUIT_SYM: Record<string, string> = { spades: "♠", hearts: "♥", diamonds: "♦", clubs: "♣" };
 
 function cardStr(c: Card): string {
-	return `${SUIT_SYM[c.suit]}${c.rank}`;
+	return `${SUIT_SYM[c.suit]} ${c.rank}`;
 }
 
 function cardsStr(cards: readonly Card[]): string {

@@ -50,7 +50,7 @@ function cardStr(card: Card): string {
 	const sym = SUIT_SYMBOLS[card.suit] ?? "?";
 	const color = SUIT_COLORS[card.suit] ?? WHITE;
 	const rank = card.rank.padEnd(2);
-	return `${color}${sym}${rank}${RESET}`;
+	return `${color}${sym} ${rank}${RESET}`;
 }
 
 function cardsStr(cards: readonly Card[]): string {

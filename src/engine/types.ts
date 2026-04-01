@@ -115,6 +115,7 @@ export interface BettingRoundState {
 	readonly minRaise: Chips;
 	readonly lastRaiserSeat: SeatIndex | null;
 	readonly actedThisRound: ReadonlySet<SeatIndex>;
+	readonly raiseCount: number;
 }
 
 // Full game state

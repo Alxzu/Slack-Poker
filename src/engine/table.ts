@@ -2,6 +2,7 @@ import {
 	applyBetAction,
 	canCall,
 	canCheck,
+	canRaise,
 	createBettingRound,
 	getNextActiveSeat,
 	isBettingRoundComplete,
@@ -720,12 +721,16 @@ export function legalActions(state: GameState, userId: string): PokerAction[] {
 		actions.push({ type: "allIn", playerId: userId });
 	}
 
-	// Raise - check minimum raise
+	// Raise - check minimum raise and raise cap
 	const minRaiseAmount =
 		(state.betting.currentBet as number) +
 		(state.betting.minRaise as number) -
 		(player.bet as number);
-	if (minRaiseAmount > 0 && (player.stack as number) >= minRaiseAmount) {
+	if (
+		minRaiseAmount > 0 &&
+		(player.stack as number) >= minRaiseAmount &&
+		canRaise(player, state.betting, chips(minRaiseAmount))
+	) {
 		actions.push({
 			type: "raise",
 			playerId: userId,

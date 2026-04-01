@@ -16,6 +16,7 @@ export function createBettingRound(
 		minRaise: bigBlind,
 		lastRaiserSeat: null,
 		actedThisRound: new Set<SeatIndex>(),
+		raiseCount: 0,
 	};
 }
 
@@ -36,6 +37,8 @@ export function canCall(
 	return player.bet < round.currentBet;
 }
 
+const MAX_RAISES_PER_ROUND = 4;
+
 export function canRaise(
 	player: PlayerState,
 	round: BettingRoundState,
@@ -43,6 +46,7 @@ export function canRaise(
 ): boolean {
 	if (player.folded || player.allIn) return false;
 	if (player.stack <= chips(0)) return false;
+	if (round.raiseCount >= MAX_RAISES_PER_ROUND) return false;
 
 	// The total bet after raising
 	const totalBetAfterRaise = (player.bet as number) + (amount as number);
@@ -124,6 +128,7 @@ export function applyBetAction(
 
 		case "raise": {
 			const raiseAmount = action.amount as number;
+			const isAllIn = raiseAmount >= (player.stack as number);
 			const newBet = (player.bet as number) + raiseAmount;
 			const raiseSize = newBet - (round.currentBet as number);
 
@@ -131,12 +136,14 @@ export function applyBetAction(
 				players: updatePlayer(players, seatIdx, {
 					stack: chips((player.stack as number) - raiseAmount),
 					bet: chips(newBet),
+					allIn: isAllIn,
 				}),
 				round: {
 					currentBet: chips(newBet),
 					minRaise: chips(Math.max(raiseSize, round.minRaise as number)),
 					lastRaiserSeat: seatIdx,
 					actedThisRound: newActed,
+					raiseCount: round.raiseCount + 1,
 				},
 			};
 		}
@@ -171,6 +178,10 @@ export function applyBetAction(
 					minRaise: newMinRaise,
 					lastRaiserSeat: newLastRaiser,
 					actedThisRound: newActed,
+					raiseCount:
+						newBet > (round.currentBet as number)
+							? round.raiseCount + 1
+							: round.raiseCount,
 				},
 			};
 		}

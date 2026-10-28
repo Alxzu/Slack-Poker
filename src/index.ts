@@ -22,6 +22,7 @@ export interface AppDeps {
 	redis: Redis;
 	gameManager: GameManager;
 	slackClient: SlackClient;
+	actionQueue?: import("groupmq").Queue;
 }
 
 export function createApp(deps: AppDeps) {
@@ -92,6 +93,7 @@ export function createApp(deps: AppDeps) {
 		db,
 		gameManager,
 		slackClient,
+		actionQueue: deps.actionQueue,
 	});
 	app.route("/slack", slack);
 
@@ -134,7 +136,7 @@ async function bootstrap() {
 	setupCronJobs({ db, slackClient, gameManager });
 
 	// Create the Hono app
-	const app = createApp({ db, redis, gameManager, slackClient });
+	const app = createApp({ db, redis, gameManager, slackClient, actionQueue: queue });
 
 	// Socket Mode for local development
 	if (config.SLACK_MODE === "socket") {

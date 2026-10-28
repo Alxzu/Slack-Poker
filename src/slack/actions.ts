@@ -2,6 +2,7 @@ export interface ActionPayload {
 	actionId: string;
 	userId: string;
 	channelId: string;
+	teamId: string;
 	messageTs: string;
 	triggerId?: string;
 	responseUrl: string;
@@ -16,6 +17,7 @@ export function parseActionPayload(rawPayload: string): ActionPayload {
 		actionId: action?.action_id ?? "",
 		userId: payload.user?.id ?? "",
 		channelId: payload.channel?.id ?? "",
+		teamId: payload.team?.id ?? "",
 		messageTs: payload.message?.ts ?? "",
 		triggerId: payload.trigger_id,
 		responseUrl: payload.response_url ?? "",

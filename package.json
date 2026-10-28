@@ -31,5 +31,8 @@
 		"@types/bun": "latest",
 		"@types/node": "^25.5.0",
 		"drizzle-kit": "^0.31.10"
+	},
+	"patchedDependencies": {
+		"groupmq@1.1.0": "patches/groupmq@1.1.0.patch"
 	}
 }

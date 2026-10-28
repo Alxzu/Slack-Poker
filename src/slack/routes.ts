@@ -269,11 +269,61 @@ export function createSlackRouter(deps: SlackDeps) {
 			"Action received",
 		);
 
+		// Handle lobby actions (join/start/leave) asynchronously
+		if (
+			deps.gameManager &&
+			deps.slackClient &&
+			["join", "start", "leave"].includes(actionType)
+		) {
+			const cmdDeps = {
+				db: deps.db,
+				gameManager: deps.gameManager,
+				slackClient: deps.slackClient,
+			};
+
+			// Fire and forget — ack first, then process
+			(async () => {
+				try {
+					let blocks: object[];
+					if (actionType === "join") {
+						blocks = await handleJoin(
+							cmdDeps,
+							payload.teamId,
+							payload.channelId,
+							payload.userId,
+						);
+					} else if (actionType === "start") {
+						blocks = await handleStart(
+							cmdDeps,
+							payload.teamId,
+							payload.channelId,
+							payload.userId,
+						);
+					} else {
+						blocks = await handleLeave(
+							cmdDeps,
+							payload.teamId,
+							payload.channelId,
+							payload.userId,
+						);
+					}
+					await deps.slackClient!.postEphemeral(
+						payload.channelId,
+						payload.userId,
+						blocks,
+					);
+				} catch (err) {
+					log.error({ err, actionType, userId: payload.userId }, "Lobby action failed");
+				}
+			})();
+
+			return c.json({});
+		}
+
 		// Handle game actions via queue if available
 		if (deps.actionQueue && deps.gameManager) {
-			const teamId = ""; // Actions don't carry team_id directly; look up from game
 			const gameId = await deps.gameManager.getChannelGame(
-				teamId,
+				payload.teamId,
 				payload.channelId,
 			);
 

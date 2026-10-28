@@ -1,0 +1,40 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 825870690dc8f7fccdaad8f25bd0a00102bc7889..2b80854dbc0e7e5ad38a81e2b274c4692a48208a 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -456,7 +456,14 @@ async function loadScript(client, name) {
+ }
+ async function evalScript(client, name, argv, numKeys) {
+ 	const sha = await loadScript(client, name);
+-	return client.evalsha(sha, numKeys, ...argv);
++	try {
++		return await client.evalsha(sha, numKeys, ...argv);
++	} catch (err) {
++		// Redis drops its script cache on restart; reload the script and retry once.
++		if (!String(err?.message ?? err).startsWith("NOSCRIPT")) throw err;
++		cacheByClient.get(client)?.delete(name);
++		return client.evalsha(await loadScript(client, name), numKeys, ...argv);
++	}
+ }
+ 
+ //#endregion
+diff --git a/dist/index.js b/dist/index.js
+index 8552fe334d5e2907bb46b0560e7aa08a3dcc31bf..d2743361f83e1faf09e8257f15622bdd45bcdf74 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -451,7 +451,14 @@ async function loadScript(client, name) {
+ }
+ async function evalScript(client, name, argv, numKeys) {
+ 	const sha = await loadScript(client, name);
+-	return client.evalsha(sha, numKeys, ...argv);
++	try {
++		return await client.evalsha(sha, numKeys, ...argv);
++	} catch (err) {
++		// Redis drops its script cache on restart; reload the script and retry once.
++		if (!String(err?.message ?? err).startsWith("NOSCRIPT")) throw err;
++		cacheByClient.get(client)?.delete(name);
++		return client.evalsha(await loadScript(client, name), numKeys, ...argv);
++	}
+ }
+ 
+ //#endregion
